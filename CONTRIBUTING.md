@@ -265,8 +265,9 @@ The high-level checklist is in
 [Developer Reference → Adding a New Sensor](docs/developer-reference.md#adding-a-new-sensor).
 The short version:
 
-1. **API models:** add a field to `custom_components/glinet_router/api/models.py`
-   if the raw API response needs a typed model.
+1. **API models:** if the raw API response shape changes, update the
+   [`glinet`](https://github.com/vithurshanselvarajah/python-glinet-router)
+   library (`glinet/models.py`) and publish a new PyPI version.
 2. **Hub models:** add a field to `custom_components/glinet_router/models.py`
    if the hub needs to expose a higher-level view.
 3. **Hub:** update `custom_components/glinet_router/hub.py` to fetch,
