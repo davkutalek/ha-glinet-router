@@ -1970,7 +1970,7 @@ def test_apply_option_updates_without_scan_interval_keeps_default() -> None:
 
 
 def test_create_api_client_passes_verify_ssl_from_settings(monkeypatch) -> None:
-    from custom_components.glinet_router.api.client import GLinetApiClient
+    from glinet.client import GLinetApiClient
 
     captured: dict[str, Any] = {}
 
@@ -1995,7 +1995,7 @@ def test_create_api_client_passes_verify_ssl_from_settings(monkeypatch) -> None:
 
 
 def test_create_api_client_defaults_verify_ssl_to_false(monkeypatch) -> None:
-    from custom_components.glinet_router.api.client import GLinetApiClient
+    from glinet.client import GLinetApiClient
 
     captured: dict[str, Any] = {}
 

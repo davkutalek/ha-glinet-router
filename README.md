@@ -113,7 +113,7 @@ The main documentation lives in the project [Wiki](https://github.com/vithurshan
 <summary><b>Developer Quick Start</b> (Click to expand)</summary>
 
 ### Project Layout
-* `custom_components/glinet_router/api`: Bundled GL.iNet API client code.
+* [`glinet`](https://github.com/vithurshanselvarajah/python-glinet-router) (external PyPI package): the async protocol layer for the GL.iNet JSON-RPC API. All transport, authentication, and module wrappers live there.
 * `custom_components/glinet_router/entities`: Home Assistant entity implementations.
 * `custom_components/glinet_router`: Integration bootstrap, config flow, hub, services, and shared models.
 * `docs`: Raw markdown files for the documentation wiki.

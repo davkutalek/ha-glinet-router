@@ -4,25 +4,37 @@ This document serves as a guide for anyone looking to contribute to, modify, or 
 
 ## Codebase Structure
 
-The integration is cleanly separated into two distinct layers:
-1. **The API Layer (`api/`)**: A standalone, framework-agnostic asynchronous HTTP client built using `aiohttp` for communicating with the GL.iNet JSON-RPC (`/rpc`) interface.
-2. **The Integration Layer (`entities/`, `hub.py`, `services.py`)**: The Home Assistant-specific implementation that translates router data into sensors, trackers, and switches.
+The project is split across two repositories:
 
-## The API Layer (`custom_components/glinet_router/api/`)
+1. **The API Layer ([`glinet`](https://github.com/vithurshanselvarajah/python-glinet-router))**: A standalone, framework-agnostic asynchronous HTTP client built using `aiohttp` for communicating with the GL.iNet JSON-RPC (`/rpc`) interface. Published to PyPI as `glinet`. Owned and developed in its own repository.
+2. **The Integration Layer (this repository, `custom_components/glinet_router/`)**: The Home Assistant-specific implementation that translates router data into sensors, trackers, and switches.
 
-The API client is highly modular.
+The integration depends on the library via `requirements: ["glinet==1.0.0"]` in
+its `manifest.json`. The library is installed automatically by Home Assistant
+from PyPI.
 
-### Modules (`api/modules/`)
-Instead of a single monolithic client class, the API is broken down into specific feature modules. Each module extends `BaseModule` and implements the RPC methods relevant to its domain. Current modules include: `system`, `wifi`, `clients`, `modem`, `mcu`, `wg_client`, `wg_server`, `ovpn_client`, `ovpn_server`, `tailscale`, `repeater`, `fan`, `firewall`, `led`, `macclone`, `diag`, `adguard`, `parental_control`, and `black_white_list`.
+## The API Layer (`glinet` package)
 
-When adding a new router endpoint, you should:
-1. Create a new module file in `api/modules/`.
-2. Inherit from `BaseModule` and implement your API calls.
-3. Attach the module to the main `GLinetApiClient` class in `api/client.py` as an instance attribute so it can be accessed like `client.my_feature.get_status()`.
+The API client is highly modular. See the
+[`glinet` README](https://github.com/vithurshanselvarajah/python-glinet-router#readme)
+for the full module map. The package is laid out as:
+
+- `glinet.client` — `GLinetApiClient`, authentication, JSON-RPC payload building.
+- `glinet.const` — timeouts and firmware version tuples.
+- `glinet.exceptions` — `APIClientError`, `AuthenticationError`, `NonZeroResponse`, `TokenError`, `UnsuccessfulRequest`.
+- `glinet.models` — typed dataclasses (`RouterStatus`, `SystemInfo`, `WifiInterfaceInfo`, `ModemInfo`, `TailscaleConnection`).
+- `glinet.modules` — `BaseModule` plus one subclass per router feature: `system`, `wifi`, `clients`, `modem`, `mcu`, `wg_client`, `wg_server`, `ovpn_client`, `ovpn_server`, `tailscale`, `repeater`, `fan`, `firewall`, `led`, `macclone`, `diag`, `adguard`, `parental_control`, `black_white_list`, `kmwan`, `mwan3`, `upgrade`, `zerotier`.
+
+### Adding a new router endpoint
+Edit the **`glinet` repository** (not this one) when you need to talk to a new
+router endpoint. Add a new module file under `src/glinet/modules/`, inherit
+from `BaseModule`, and attach it to `GLinetApiClient` in `client.py`. Then
+bump the library version, publish to PyPI, and bump the `glinet` pin in this
+repository's `manifest.json`.
 
 ### Models
 The integration uses two layers of data models:
-- **`api/models.py`**: Strongly-typed `dataclass` models for raw API response fields. These are returned directly from API module calls.
+- **`glinet.models`**: Strongly-typed `dataclass` models for raw API response fields. These are returned directly from API module calls.
 - **`models.py`** (integration layer): Higher-level dataclasses used by the hub and entities, e.g., `ClientDeviceInfo`, `RepeaterStatus`, `WireGuardClient`, `ParentalGroup`. These aggregate, transform, or combine data from one or more API responses.
 
 ## The Integration Layer
@@ -47,7 +59,7 @@ All entities inherit from `CoordinatorEntity[GLinetHub]`. Entities should **neve
 
 ### Adding a New Sensor
 To add a new sensor for an existing API endpoint:
-1. **API Models:** Update `api/models.py` if the new field isn't captured in the raw API dataclass.
+1. **API Models:** If the raw response shape changes, update the `glinet` library (`glinet/models.py`) and publish a new version.
 2. **Hub Models:** Update `models.py` if the new field needs a higher-level model or transformation.
 3. **Hub:** Update `hub.py` to fetch, store, and expose the new data point.
 4. **Entities:** Add your sensor to `entities/sensor.py`.
@@ -67,7 +79,11 @@ python -m ruff format custom_components tests
 ```
 
 ### Dependencies
-Do not add massive third-party library dependencies unless absolutely necessary. Home Assistant integrations should remain lightweight. The core integration relies only on `aiohttp` (which is native to HA).
+Do not add massive third-party library dependencies unless absolutely necessary. Home Assistant integrations should remain lightweight.
+
+The integration's runtime dependencies are:
+- `homeassistant` (provided by the HA runtime).
+- `glinet` (the bundled-in-PyPI protocol layer; the only place `aiohttp` and `passlib` are imported).
 
 ## Branching & PRs
 

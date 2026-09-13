@@ -6,7 +6,6 @@ from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from aiohttp import ClientError
 from homeassistant.components.device_tracker import (
     CONF_CONSIDER_HOME,
     DEFAULT_CONSIDER_HOME,
@@ -30,17 +29,18 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util.dt import utcnow
 
-from .api import (
+from glinet import (
     APIClientError,
+    ClientError,
     GLinetApiClient,
     NonZeroResponse,
     TailscaleConnection,
     TokenError,
 )
-from .api.const import FIRMWARE_4_9
-from .api.exceptions import AuthenticationError
-from .api.models import RouterStatus
-from .api.utils import decode_firmware_version
+from glinet.const import FIRMWARE_4_9
+from glinet.exceptions import AuthenticationError
+from glinet.models import RouterStatus
+from glinet.utils import decode_firmware_version
 from .const import (
     API_PATH,
     CONF_ADD_ALL_DEVICES,
@@ -489,6 +489,15 @@ class GLinetHub(DataUpdateCoordinator[None]):
                 raise ConfigEntryAuthFailed from exc
 
     async def fetch_all_data(self, _: datetime | None = None) -> None:
+        # Only authenticate when the client has no session. Calling
+        # `refresh_session_token()` on every poll would force a brand new
+        # `sid` each cycle, which on GL.iNet firmware evicts the previous
+        # session from the router's 5-entry web session table and, as a side
+        # effect, evicts the user's browser session as well. The reactive
+        # path in `_invoke_api()` already detects a stale sid (via
+        # `_token_error` / `_connect_error`) and refreshes it before the next
+        # call, so an expired session is recovered lazily without
+        # re-authenticating on every poll.
         if not self.router_api.logged_in:
             try:
                 await self.refresh_session_token()

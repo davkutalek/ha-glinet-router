@@ -2,10 +2,17 @@
 
 `glinet-router` is a Home Assistant custom integration for GL.iNet routers. It uses local polling against the router JSON-RPC endpoint and does not depend on a cloud service.
 
+The protocol layer (HTTP transport, authentication, module wrappers) lives in a
+separate library, [`glinet`](https://github.com/vithurshanselvarajah/python-glinet-router),
+which is installed as a regular PyPI dependency. The integration is a thin
+wrapper that maps router state to Home Assistant entities and services.
+
 ## Main Modules
 
-- `custom_components/glinet_router/api`: bundled async API client for `/rpc`.
-- `custom_components/glinet_router/api/models.py`: strongly-typed dataclasses for API responses.
+- `glinet` (external PyPI package): async API client for `/rpc`, plus typed
+  dataclasses for the common API responses. See
+  [python-glinet-router](https://github.com/vithurshanselvarajah/python-glinet-router)
+  for the full module map.
 - `custom_components/glinet_router/config_flow.py`: Home Assistant setup and options flow.
 - `custom_components/glinet_router/hub.py`: runtime state holder and poller.
 - `custom_components/glinet_router/entities`: entity implementations.

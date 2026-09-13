@@ -4,17 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "glinet-router"
-version = "1.6.2"
-description = "Unified GL.iNet Router Home Assistant integration with bundled API client"
+version = "1.7.0"
+description = "Unified GL.iNet Router Home Assistant integration"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 license = "MIT"
 authors = [
     { name = "Vithurshan Selvarajah" },
 ]
 dependencies = [
     "homeassistant>=2026.5.0",
-    "passlib>=1.7.4",
+    "glinet[auth]==0.0.1",
 ]
 
 [project.optional-dependencies]

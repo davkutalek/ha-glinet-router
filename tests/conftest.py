@@ -1,3 +1,12 @@
+"""Pytest configuration for the ha-glinet-router test suite.
+
+The integration depends on the `glinet` library (which itself depends on
+`aiohttp` and `passlib`). Those packages are installed as regular
+dependencies in the test environment, so this conftest only needs to stub
+the Home Assistant runtime modules (which are not available when running
+the integration tests in isolation).
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -11,34 +20,6 @@ from typing import Any
 
 
 def pytest_configure() -> None:
-    aiohttp = sys.modules.get("aiohttp") or types.ModuleType("aiohttp")
-    if not hasattr(aiohttp, "ClientError"):
-        aiohttp.ClientError = OSError
-    if not hasattr(aiohttp, "ClientResponse"):
-        aiohttp.ClientResponse = object
-    if not hasattr(aiohttp, "ClientSession"):
-        aiohttp.ClientSession = object
-    sys.modules.setdefault("aiohttp", aiohttp)
-
-    passlib = sys.modules.get("passlib") or types.ModuleType("passlib")
-    passlib_hash = types.ModuleType("passlib.hash")
-
-    class _CryptStub:
-        @classmethod
-        def using(cls, **_: Any) -> type[_CryptStub]:
-            return cls
-
-        @staticmethod
-        def hash(password: str) -> str:
-            return f"crypt:{password}"
-
-    passlib_hash.md5_crypt = _CryptStub
-    passlib_hash.sha256_crypt = _CryptStub
-    passlib_hash.sha512_crypt = _CryptStub
-    passlib.hash = passlib_hash
-    sys.modules.setdefault("passlib", passlib)
-    sys.modules.setdefault("passlib.hash", passlib_hash)
-
     try:
         import voluptuous
     except ModuleNotFoundError:
